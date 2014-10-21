@@ -7,9 +7,10 @@ Projct name:
 
 Group name:              
 
-Group member(github ID): Xujie Zheng(xj721386) A00394753
-                         Fengxiao Yuan(FengxiaYuan) A00394754                      
-                         Jie Zhang(JieZhang0918) A00331569                  
+Group member(github ID): 
+Xujie Zheng(xj721386) A00394753
+Fengxiao Yuan(FengxiaYuan) A00394754                      
+Jie Zhang(JieZhang0918) A00331569                  
 
 psssible feature is listed in the issue section, feel free to add or comment.
 
