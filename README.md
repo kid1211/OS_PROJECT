@@ -6,6 +6,8 @@ create a custom shell
 Projct name:                                                           
 Group name:                                                         
 Group member(github ID): Xujie Zheng(xj721386)
+                         Fengxiao Yuan()                      
+                         Jie Zhang()                    
 
 psssible feature is listed in the issue section, feel free to add or comment.
 
