@@ -3,8 +3,8 @@ OS_PROJECT
 
 create a custom shell
 
-Projct name:
-Group name:
+Projct name:\n
+Group name:\n
 Group member(github ID): Xujie Zheng(xj721386)
 
 psssible feature is listed in the issue section, feel free to add or comment.
