@@ -3,14 +3,14 @@ OS_PROJECT
 
 create a custom shell
 
-Projct name:        
+Projct name:   Custom Shell     
 
-Group name:              
+Group name:     (TBD)         
 
 Group member(github ID): 
-Xujie Zheng(xj721386) A00394753 
-Fengxiao Yuan(FengxiaYuan) A00394754                      
-Jie Zhang(JieZhang0918) A00331569                  
+Xujie Zheng(xj721386) A00394753                                                                          
+Fengxiao Yuan(FengxiaYuan) A00394754                                                                            
+Jie Zhang(JieZhang0918) A00331569                                                                     
 
 psssible feature is listed in the issue section, feel free to add or comment.
 
