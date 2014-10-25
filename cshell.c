@@ -97,9 +97,6 @@ int parse(char* input, char* commands, char* arguments)
 //function that check the comand if it is in the directory
 int check_cmd(char* commands,char* dir, int depth)
 {
-#if debug
-	fprintf(stdout,"running check_cmd function\n");
-#endif
 	// part of the code is come from http://blog.csdn.net/zhuyi2654715/article/details/7605051
 	DIR *dirpath;
 	struct dirent *entry;
@@ -116,15 +113,18 @@ int check_cmd(char* commands,char* dir, int depth)
 		lstat(entry->d_name, &statbuf);
 		if (S_ISDIR(statbuf.st_mode)) {//check if it is still in the directory
 			if (strcmp(entry->d_name, ".")==0||strcmp(entry->d_name, "..")==0) continue; 
-			if(strcmp(entry->d_name,commands)==1){//strcmp return 0 means it is a match
+			else if(strcmp(entry->d_name,commands)==1){//strcmp return 0 means it is a match
 #if debug
 			fprintf(stdout,"%s\n",entry->d_name);
 #endif
-			continue;
+	
 			}
-			else if(strcmp(entry->d_name,commands)==0) {
-				fprintf(stdout,"%s is found\n",entry->d_name);
-			}
+		check_cmd(commands,entry->d_name,depth+4);//go inside the folder
+		}
+		else if(strcmp(entry->d_name,commands)==0){
+#if debug
+			 fprintf(stdout,"%s is in foloder %s\n",entry->d_name,dir);
+#endif
 		}
 	}
 	//change the working directory back to home and close it before return
