@@ -20,5 +20,5 @@ All the features are expected to finish 10 days before the presentation. Then, m
 
 
 additional info:
-http://www.cs.cornell.edu/Courses/cs414/2004su/homework/shell/shell.html
-http://blog.csdn.net/zhuyi2654715/article/details/7605051
+1.  http://www.cs.cornell.edu/Courses/cs414/2004su/homework/shell/shell.html      
+2.  http://blog.csdn.net/zhuyi2654715/article/details/7605051
