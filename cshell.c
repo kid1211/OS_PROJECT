@@ -25,7 +25,7 @@ Description: building a custom shell that include the following features
 #include <string.h>
 #include <sys/stat.h>
 #include <dirent.h>
-
+#include <sys/wait.h>
 /**********************************************pragram global variable declartion here*****************************************************************************/
 #define debug 1//0 = off, 1=on
 #define MAX_LENGTH 1024//the max length of a line of command received
@@ -44,7 +44,6 @@ if you want that part for debug use the following (also set debug =1 )
 /*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)************************/
 int parse(char* input, char** arguments);//parse the line of input, sepreate them into arguments array, the return number is how many argument there is, and arguments[0] is command
 void check_cmd(char* commands,char* dir, int depth);//function that check the comand if it is in the directory
-void run_machine();//create a fork process to execute the command and argument
 
 //main function
 int main(int argc, char *argv[]){
@@ -70,19 +69,36 @@ int main(int argc, char *argv[]){
 		printf("$ ");//shell command line symbol
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//read the input untill it read a \n or the end of input
 		cargc = parse(input, arguments);
+	arguments[cargc+1] = NULL;//let the last argument be null
+/*
+#if debug
+        int i;//counter for printing the output
+        fprintf(stdout,"input is:\n");
+        for(i=0;i<=cargc;i++) fprintf(stdout,"|%s|argument:%d\n",arguments[i],i);
+#endif
+*/
+	
+	int rc= fork();
+	if(rc==0) execvp(*arguments,arguments);
+	else if(rc>0){
+	int wc = wait(NULL);
+
+//		check_cmd(arguments[0],"/bin",0);
 #if debug
 	int i;//counter for printing the output
 	fprintf(stdout,"input is:\n");
 	for(i=0;i<=cargc;i++) fprintf(stdout,"%s\t",arguments[i]);
-	fprintf(stdout,"\nargument is %d",cargc);
+	fprintf(stdout,"\nargument is %d\n",cargc);
 #endif
+	}
 
 //free up all the used space after before quit
 	free(input); //freee the space before quit
-//	free(arguments);
+	free(arguments);
 //	free(*arguments);
 	return 0;
-	}
+}
+	
 }
 /***************************************all functions bodies should be written here***************************************************************************/
 //parse the line of input, sepreate them into command catergory or argument and return both in pointers
@@ -95,10 +111,12 @@ int parse(char* input, char** arguments)
 			//the first token  is in the input is the command and the rest are the argument
 			i++;
 			arguments[i] = strtok(NULL," \t\r") ;	
+	
 	}
+	arguments[i][strlen(arguments[i])-1] = '\0';//remove the enter from the input and replce it with \0
 	return i;
 }
-/*
+
 //function that check the comand if it is in the directory
 void check_cmd(char* commands,char* dir, int depth)
 {
@@ -139,10 +157,3 @@ void check_cmd(char* commands,char* dir, int depth)
 	closedir(dirpath);
 	return;
 }
-
-//create a fork process to execute the command and argument
-void run_machine(){
-	//      int execl(const char *path, const char *arg, ...);
-	fprintf(stdout,"run machine\n");
-	return ;
-}*/
