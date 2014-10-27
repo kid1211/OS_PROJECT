@@ -29,7 +29,7 @@ Description: building a custom shell that include the following features
 /**********************************************pragram global variable declartion here*****************************************************************************/
 #define debug 1//0 = off, 1=on
 #define MAX_LENGTH 1024//the max length of a line of command received
-#define error 1
+#define error 1//errno
 #define MAX_ARGS 20
 
 
@@ -41,8 +41,8 @@ if you want that part for debug use the following (also set debug =1 )
 */
 
 
-/*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)***********/
-int parse(char* input, char* commands, char* arguments);//parse the line of input, sepreate them into command catergory or argument and return both in pointers
+/*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)************************/
+int parse(char* input, char** arguments);//parse the line of input, sepreate them into arguments array, the return number is how many argument there is, and arguments[0] is command
 void check_cmd(char* commands,char* dir, int depth);//function that check the comand if it is in the directory
 void run_machine();//create a fork process to execute the command and argument
 
@@ -50,65 +50,55 @@ void run_machine();//create a fork process to execute the command and argument
 int main(int argc, char *argv[]){
 
 	//varriable declaration
-	int err;
 	char* input = (char *) malloc(MAX_LENGTH);
-	char* commands = (char *)malloc(MAX_LENGTH);
-	char* arguments = (char *)malloc(MAX_LENGTH);
+	char** arguments= (char **)malloc(MAX_ARGS*sizeof(char*));
+	DIR* dirpath;
+	int cargc;
 	
 	if(argc>1){
 		fprintf(stderr, "this program %s does not take argument\n",argv[0]);
-		return error;//return error/1 indicate taht this is a abnormal exit
+		exit(error);//return error/1 indicate taht this is a abnormal exit
 
 	}
+
+	//initialize the arguments[]
+	int j;
+	for(j=0;j<=MAX_ARGS;j++) arguments[j] = malloc(MAX_LENGTH);
+
+	//start of the main function
 	while(1){//constantly running shell
 		printf("$ ");//shell command line symbol
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//read the input untill it read a \n or the end of input
-	
-		if((err = parse(input, commands, arguments))==0) fprintf(stderr,"unable to use parse function");
-	}
+		cargc = parse(input, arguments);
+#if debug
+	int i;//counter for printing the output
+	fprintf(stdout,"input is:\n");
+	for(i=0;i<=cargc;i++) fprintf(stdout,"%s\t",arguments[i]);
+	fprintf(stdout,"\nargument is %d",cargc);
+#endif
 
 //free up all the used space after before quit
 	free(input); //freee the space before quit
+//	free(arguments);
+//	free(*arguments);
 	return 0;
+	}
 }
-
 /***************************************all functions bodies should be written here***************************************************************************/
 //parse the line of input, sepreate them into command catergory or argument and return both in pointers
-int parse(char* input, char* commands, char* arguments)
+int parse(char* input, char** arguments)
 {
-	char **arg = (char**) malloc(MAX_ARGS);
-	int i=0;//counter for argument
-	DIR *dp;
-
-//	while(1){
-//		if((commands = strtok(input," \t\r\n")) != NULL){//the first word that is in the input is the command		
+	int i=0;//counter for number of arguments
+	arguments[i]=strtok(input," \t\r\n");
 	
-
-//check larry's code
-	commands = strtok(input," \t\r\n");
-	while(commands[strlen(commands)] != '\n'){		
-#if debug
-			fprintf(stdout,"debug:the command is %s\n",commands);
-#endif
-			//cannot find a way to check if the command is valid right now, because the check_cmd will be call multiple times inside a check_cmd function{
-			//stderr
-			
-			//if((check_cmd(commands,"/bin",0)==1) &&(check_cmd(commands,"/usr/bin",0)==1)){
-			//	fprintf(stderr,"command not found\n");
-			//}
-			
-			check_cmd(commands,"/bin",0);
-			check_cmd(commands,"/usr/bin",0);
-
-			arg[i] = strtok(NULL," \t\r\n") ;
+	while(arguments[i][strlen(arguments[i])-1] != '\n'){//since the last bit/interger of the string is \0 therefore the \n is the last bit -a bit
+			//the first token  is in the input is the command and the rest are the argument
 			i++;
-			fprintf(stdout,"i = %d",i);	
-		}
-	getchar();
-
-	return 0;
+			arguments[i] = strtok(NULL," \t\r") ;	
+	}
+	return i;
 }
-
+/*
 //function that check the comand if it is in the directory
 void check_cmd(char* commands,char* dir, int depth)
 {
@@ -155,4 +145,4 @@ void run_machine(){
 	//      int execl(const char *path, const char *arg, ...);
 	fprintf(stdout,"run machine\n");
 	return ;
-}
+}*/
