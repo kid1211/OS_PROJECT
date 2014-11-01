@@ -9,7 +9,7 @@ Jie Zhang(JieZhang0918) A00331569
 Description: building a custom shell that include the following features
 1.check if the command is found
 2.listing the command that has been input command cmdhistory (this will print the cmd entered even it is an unsuccessful input, give a chance for the user to correct it)
-3.
+3.ctrl+c or ctrl+z to end(quit) the shell
 4.
 5.
 6.
@@ -55,15 +55,24 @@ void main(int argc, char *argv[]){
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//if the argument is sending longer than MAX_LENGTH the program will quit
 		strcpy(arg_his[lognumber],input);
 		lognumber++;
-
+		
 	
 		//initialize the arguments[]
+		cmdfound=0;
+		
+		//parse the input
 		cargc = parse(input, arguments);
 		arguments[cargc+1] = NULL;//let the last argument be null
-		if(strcmp(arguments[0],"cmdhistory")==0)//print the cmd history
+		
+		//special case command
+		if(strcmp(arguments[0],"cmdhistory")==0){//print the cmd history
 			for(j = 0; j<lognumber;j++) fprintf(stdout,"%d %s",j,arg_his[j]);	
-			
-		if(strcmp(arguments[0],"^[[A\n")==0) printf("hi");
+			cmdfound = 1;
+		}
+		if(strcmp(arguments[0],"cd")==0){
+			chdir(arguments[1]);
+			cmdfound =1;
+		}
 	
 /*************************going to create a new process to run************************************************************************************************************************/		
 		int rc= fork();
@@ -75,7 +84,6 @@ void main(int argc, char *argv[]){
 			else fprintf(stdout,"current directory is %s\n",cwd);
 #endif
 			
-			cmdfound=0;
 			check_cmd(arguments[0],"/bin",0);
 			if(!cmdfound) check_cmd(arguments[0],"/usr/bin",0);//for tab feature
 			if(!cmdfound) fprintf(stderr,"command is not found\n");//cmd found maks cmdfound =1
@@ -101,7 +109,7 @@ void main(int argc, char *argv[]){
 int parse(char* input, char** arguments)
 {
 	int i=0;//counter for number of arguments
-	arguments[i]=strtok(input," \t\r");//no \n for the strtok so that the \n will not be removed
+	arguments[i]=strtok(input," ");//no \n for the strtok so that the \n will not be removed
 	
 	
 	while(arguments[i][strlen(arguments[i])-1] != '\n'){//since the last bit/interge of the string is \0 therefore the \n is the last bit -a bit
@@ -110,7 +118,7 @@ int parse(char* input, char** arguments)
 	
 			//the first token  is in the input is the command and the rest are the argument
 			i++;
-			arguments[i] = strtok(NULL," \t\r") ;	
+			arguments[i] = strtok(NULL," ") ;	
 	
 	}
 	arguments[i][strlen(arguments[i])-1] = '\0';//remove the enter from the input and replace it with \0
