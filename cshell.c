@@ -27,7 +27,7 @@ Description: building a custom shell that include the following features
 #include <dirent.h>
 #include <sys/wait.h>
 /**********************************************pragram global variable declartion here*****************************************************************************/
-#define debug 1//0 = off, 1=on
+#define debug 0//0 = off, 1=on
 #define MAX_LENGTH 1024//the max length of a line of command received
 #define error 1//errno
 #define MAX_ARGS 20
@@ -51,6 +51,8 @@ int main(int argc, char *argv[]){
 	//varriable declaration
 	char* input = (char *) malloc(MAX_LENGTH);
 	char** arguments= (char **)malloc(MAX_ARGS*sizeof(char*));
+   	int j;
+       	for(j=0;j<MAX_ARGS;j++) arguments[j] = (char*)malloc(MAX_LENGTH+1);
 	DIR* dirpath;
 	int cargc;
 	
@@ -60,16 +62,14 @@ int main(int argc, char *argv[]){
 
 	}
 
-	//initialize the arguments[]
-	int j;
-	for(j=0;j<=MAX_ARGS;j++) arguments[j] = malloc(MAX_LENGTH);
-
 	//start of the main function
 	while(1){//constantly running shell
-		printf("$ ");//shell command line symbol
-		if(!fgets(input, MAX_LENGTH, stdin)) break;//read the input untill it read a \n or the end of input
+		fprintf(stdout,"$ ");//shell command line symbol
+		if(!fgets(input, MAX_LENGTH, stdin)) break;//if no argument is received the shell will quit
+		//initialize the arguments[]
 		cargc = parse(input, arguments);
-	arguments[cargc+1] = NULL;//let the last argument be null
+		arguments[cargc+1] = NULL;//let the last argument be null
+		
 /*
 #if debug
         int i;//counter for printing the output
@@ -77,13 +77,12 @@ int main(int argc, char *argv[]){
         for(i=0;i<=cargc;i++) fprintf(stdout,"|%s|argument:%d\n",arguments[i],i);
 #endif
 */
-	
-	int rc= fork();
-	if(rc==0) execvp(*arguments,arguments);
-	else if(rc>0){
-	int wc = wait(NULL);
+		int rc= fork();
+		if(rc==0) execvp(*arguments,arguments);
+		else if(rc>0){
+		int wc = wait(NULL);
 
-//		check_cmd(arguments[0],"/bin",0);
+//		check_cmd(arguments[0],"/bin",0);//for tab feature
 #if debug
 	int i;//counter for printing the output
 	fprintf(stdout,"input is:\n");
@@ -91,13 +90,13 @@ int main(int argc, char *argv[]){
 	fprintf(stdout,"\nargument is %d\n",cargc);
 #endif
 	}
-
+}
 //free up all the used space after before quit
 	free(input); //freee the space before quit
 	free(arguments);
-//	free(*arguments);
+	free(*arguments);
 	return 0;
-}
+
 	
 }
 /***************************************all functions bodies should be written here***************************************************************************/
@@ -105,9 +104,13 @@ int main(int argc, char *argv[]){
 int parse(char* input, char** arguments)
 {
 	int i=0;//counter for number of arguments
-	arguments[i]=strtok(input," \t\r\n");
+	arguments[i]=strtok(input," \t\r");
+	
 	
 	while(arguments[i][strlen(arguments[i])-1] != '\n'){//since the last bit/interger of the string is \0 therefore the \n is the last bit -a bit
+		
+	
+	
 			//the first token  is in the input is the command and the rest are the argument
 			i++;
 			arguments[i] = strtok(NULL," \t\r") ;	
