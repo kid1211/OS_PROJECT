@@ -17,7 +17,7 @@ Description: building a custom shell that include the following features
 8.
 9.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------*/
-
+#include "config.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -26,23 +26,6 @@ Description: building a custom shell that include the following features
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/wait.h>
-/**********************************************pragram global variable declartion here*****************************************************************************/
-#define debug 1//0 = off, 1=on
-#define MAX_LENGTH 1024//the max length of a line of command received
-#define error 1//errno
-#define MAX_ARGS 20
-#define MAX_LOG 20
-/***********************************************global interger to indicate the status**************************************************************************/
-int cmdfound;
-int lognumber;//history log
-
-/*
-sidenote:
-if you want that part for debug use the following (also set debug =1 )
-#if debug
-#endif
-*/
-
 
 /*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)************************/
 int parse(char* input, char** arguments);//parse the line of input, sepreate them into arguments array, the return number is how many argument there is, and arguments[0] is command
