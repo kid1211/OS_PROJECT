@@ -7,8 +7,8 @@ Fengxiao Yuan(FengxiaYuan) A00394754
 Jie Zhang(JieZhang0918) A00331569
 
 Description: building a custom shell that include the following features
-1.
-2.
+1.check if the command is found
+2.listing the command that has been input command cmdhistory (this will print the cmd entered even it is an unsuccessful input, give a chance for the user to correct it)
 3.
 4.
 5.
@@ -27,12 +27,15 @@ Description: building a custom shell that include the following features
 #include <dirent.h>
 #include <sys/wait.h>
 /**********************************************pragram global variable declartion here*****************************************************************************/
-#define debug 0//0 = off, 1=on
+#define debug 1//0 = off, 1=on
 #define MAX_LENGTH 1024//the max length of a line of command received
 #define error 1//errno
 #define MAX_ARGS 20
+#define MAX_LOG 20
 /***********************************************global interger to indicate the status**************************************************************************/
 int cmdfound;
+int lognumber;//history log
+
 /*
 sidenote:
 if you want that part for debug use the following (also set debug =1 )
@@ -47,7 +50,10 @@ void check_cmd(char* commands,char* dir, int depth);//function that check the co
 
 //main function
 void main(int argc, char *argv[]){
-	
+	char** arg_his= (char **) malloc(MAX_LOG*sizeof(char*));//store input from user
+	int j;
+	for(j=0;j<MAX_LOG;j++) arg_his[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
+	lognumber=0;//initialize the global variable for the arguments history
 	if(argc>1){
 		fprintf(stderr, "this program %s does not take argument\n",argv[0]);
 		exit(error);//return error/1 indicate taht this is a abnormal exit
@@ -59,29 +65,31 @@ void main(int argc, char *argv[]){
 		//varriable declaration
 		char* input = (char *) malloc(MAX_LENGTH);
 		char** arguments= (char **) malloc(MAX_ARGS*sizeof(char*));
-   		int j;
+   		
        		for(j=0;j<MAX_ARGS;j++) arguments[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 		int cargc;
-		
 		fprintf(stdout,"$ ");//shell command line symbol
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//if the argument is sending longer than MAX_LENGTH the program will quit
+		strcpy(arg_his[lognumber],input);
+		lognumber++;
+
+	
 		//initialize the arguments[]
 		cargc = parse(input, arguments);
 		arguments[cargc+1] = NULL;//let the last argument be null
-		
-/*
-#if debug
-        int i;//counter for printing the output
-        fprintf(stdout,"input is:\n");
-        for(i=0;i<=cargc;i++) fprintf(stdout,"|%s|argument:%d\n",arguments[i],i);
-#endif
-*/
+		if(strcmp(arguments[0],"cmdhistory")==0)//print the cmd history
+			for(j = 0; j<lognumber;j++) fprintf(stdout,"%d %s",j,arg_his[j]);	
+			
+		if(strcmp(arguments[0],"^[[A\n")==0) printf("hi");
+	
+/*************************going to create a new process to run************************************************************************************************************************/		
 		int rc= fork();
-		if(rc==0) {//excute the valid command and also check if the command is valid and tab feature
+		if(rc<0) fprintf(stderr, "unable to create a new process,worst shell ever\n");
+		else if(rc==0) {//excute the valid command and also check if the command is valid and tab feature
 			char* cwd = getcwd(NULL,0);//get current directory and store it so that later on it can be retreat
 			if(cwd==NULL) fprintf(stderr,"getcwd() error");
 #if debug
-			else fprintf(stdout,"currentshithole is %s\n",cwd);
+			else fprintf(stdout,"current directory is %s\n",cwd);
 #endif
 			
 			cmdfound=0;
@@ -94,20 +102,12 @@ void main(int argc, char *argv[]){
 	
 		}
 		else if(rc>0){
-			int wc = wait(NULL);
+			int wc = wait(NULL);//return what child process it has been waited
 			//free up all the used space after before quit
 			free(input); //freee the space before quit
 			free(arguments);
-			
-
-#if debug
-	int i;//counter for printing the output
-	fprintf(stdout,"input is:\n");
-	for(i=0;i<=cargc;i++) fprintf(stdout,"%s\t",arguments[i]);
-	fprintf(stdout,"\nargument is %d\n",cargc);
-#endif
 		}
-}
+	}
 	
 	exit(1);//if the program quit this way, something is wrong
 
