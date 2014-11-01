@@ -10,7 +10,7 @@ Description: building a custom shell that include the following features
 1.check if the command is found
 2.listing the command that has been input command cmdhistory (this will print the cmd entered even it is an unsuccessful input, give a chance for the user to correct it)
 3.ctrl+c or ctrl+z to end(quit) the shell
-4.
+4.after modify the config.h file, another compilation is require also another ./a.out run
 5.
 6.
 7.
@@ -26,10 +26,12 @@ Description: building a custom shell that include the following features
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/wait.h>
+#include<ncurses.h>//handle tab or up/down arrow key come from http://stackoverflow.com/questions/15306463/getchar-returns-the-same-value-27-for-up-and-down-arrow-keys
 
 /*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)************************/
 int parse(char* input, char** arguments);//parse the line of input, sepreate them into arguments array, the return number is how many argument there is, and arguments[0] is command
 void check_cmd(char* commands,char* dir, int depth);//function that check the comand if it is in the directory
+void getinput(char* input);//this function will take the input from stdin and copy it to the input string.
 
 //main function
 void main(int argc, char *argv[]){
@@ -52,7 +54,14 @@ void main(int argc, char *argv[]){
        		for(j=0;j<MAX_ARGS;j++) arguments[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 		int cargc;
 		fprintf(stdout,"$ ");//shell command line symbol
+		/*
+		//cannot handle the tab or up arrow input, if use fgets(); need to rewrite 
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//if the argument is sending longer than MAX_LENGTH the program will quit
+		*/
+		//get the input from the user
+		getinput(input);
+
+
 		strcpy(arg_his[lognumber],input);
 		lognumber++;
 		
@@ -164,5 +173,22 @@ void check_cmd(char* commands,char* dir, int depth)
 	//change the working directory back to home and close it before return
 	chdir("..");
 	closedir(dirpath);
-	return;
+	return;//return nothing because this is a void function
+}
+//this function will take the input from stdin and copy it to the input string.
+void getinput(char* input){
+	int counter;
+	/* Curses Initialisations */
+	initscr();
+	raw();
+	keypad(stdscr, TRUE);
+	noecho();
+
+	while(counter<=MAX_LENGTH){//will not leave until it reach the MAX_LENGTH or other condition specify below
+		input[counter] = (char) fgetc(stdin);
+		if(input[counter] == '\n') break;
+		if(input[counter] == KEY_UP) printf("heyheyheyhi\n");
+		counter++;
+	}
+	return;//return nothing because this is a void function
 }
