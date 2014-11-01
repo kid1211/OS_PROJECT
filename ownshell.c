@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
 		printf("$ ");//shell command line symbol
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//read the input untill it read a \n or the end of input
 		cargc = parse(input, arguments);
-	arguments[cargc+1] = NULL;//let the last argument be null
+		arguments[cargc+1] = NULL;//let the last argument be null
 /*
 #if debug
         int i;//counter for printing the output
@@ -77,11 +77,11 @@ int main(int argc, char *argv[]){
         for(i=0;i<=cargc;i++) fprintf(stdout,"|%s|argument:%d\n",arguments[i],i);
 #endif
 */
-	
-	int rc= fork();
-	if(rc==0) execvp(*arguments,arguments);
-	else if(rc>0){
-	int wc = wait(NULL);
+		if(strcmp(arguments[0],"exit")==0) break;
+		int rc= fork();
+		if(rc==0) execvp(*arguments,arguments);
+		else if(rc>0){
+		int wc = wait(NULL);
 
 //		check_cmd(arguments[0],"/bin",0);
 #if debug
@@ -91,13 +91,13 @@ int main(int argc, char *argv[]){
 	fprintf(stdout,"\nargument is %d\n",cargc);
 #endif
 	}
-
+}
 //free up all the used space after before quit
 	free(input); //freee the space before quit
 	free(arguments);
-//	free(*arguments);
+	free(*arguments);
 	return 0;
-}
+
 	
 }
 /***************************************all functions bodies should be written here***************************************************************************/
