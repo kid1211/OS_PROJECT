@@ -30,6 +30,7 @@ Description: building a custom shell that include the following features
 /*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)************************/
 int parse(char* input, char** arguments);//parse the line of input, sepreate them into arguments array, the return number is how many argument there is, and arguments[0] is command
 void check_cmd(char* commands,char* dir, int depth);//function that check the comand if it is in the directory
+void getinput(char* input);//this function will take the input from stdin and copy it to the input string.
 
 //main function
 void main(int argc, char *argv[]){
@@ -52,7 +53,14 @@ void main(int argc, char *argv[]){
        		for(j=0;j<MAX_ARGS;j++) arguments[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 		int cargc;
 		fprintf(stdout,"$ ");//shell command line symbol
+		/*
+		//cannot handle the tab or up arrow input, if use fgets(); need to rewrite 
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//if the argument is sending longer than MAX_LENGTH the program will quit
+		*/
+		//get the input from the user
+		getinput(input);
+
+
 		strcpy(arg_his[lognumber],input);
 		lognumber++;
 		
@@ -164,5 +172,37 @@ void check_cmd(char* commands,char* dir, int depth)
 	//change the working directory back to home and close it before return
 	chdir("..");
 	closedir(dirpath);
-	return;
+	return;//return nothing because this is a void function
+}
+//this function will take the input from stdin and copy it to the input string.
+void getinput(char* input){
+	int counter;
+	char temp1,temp2;//temporary char storage in case something is wrong need to retreat
+
+	while(counter<=MAX_LENGTH){//will not leave until it reach the MAX_LENGTH or other condition specify below
+		input[counter] = (char) fgetc(stdin);
+		if(input[counter] == '\n') break;
+		//following code is from http://stackoverflow.com/questions/10463201/getch-and-arrow-codes
+		/*if(input[counter] == '\033'){//\033 is escape key, since there is no direct char that is repersent up or down arrow
+			if((temp1 = fgetc(stdin)) == '['){//if temp1 =  [ keep going if not correct the error
+				
+				if((temp2=fgetc(stdin)) == 'A')//arrow up
+					printf("gotchar\n");
+				else if((temp2=fgetc(stdin)) == 'B'){;}//arrow down
+				else{//this is not a up arrow or a down arrow key press
+					counter++;
+					input[counter]=temp1;
+					counter++;
+					input[counter]=temp2;
+				}
+			}
+			else{
+				counter++;
+				input[counter]=temp1;
+			}	
+		}*/
+		counter++;
+	}
+	input[counter] = '\0';
+	return;//return nothing because this is a void function
 }
