@@ -96,13 +96,20 @@ void main(int argc, char *argv[]){
 			tab_log = NULL;
 			//further is equal to 0
 			tab_log = check_cmd(arguments[cargc],cwd, 0,0);
-			if(tab_log != NULL) arguments[cargc] = tab_log;
+			
+			if(tab_log != NULL){
+				//this will make the program run 2 times for reasons that is unkonwn
+				
+				/*fprintf(stdout,"do you mean %s? y/n\n",tab_log);
+				if(getchar() == 'y') */
+					arguments[cargc] = tab_log;
+
+			}
 			else fprintf(stderr,"more than one file is matched or no such file in this folder\n");
 			tab_log = NULL;	
 			chdir(cwd);//go back to current cwd
 			free(cwd);
-
-		}
+		}	
 			
 			
 		//special case command
@@ -148,7 +155,7 @@ void main(int argc, char *argv[]){
 			int b;
 			for(b =0 ; b<sizeof(arguments);b++) fprintf(stdout,"|%d %s|\n",b,arguments[b]);
 #endif	
-
+			
 			execvp(*arguments,arguments);
 	
 		}
