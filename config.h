@@ -5,6 +5,5 @@
 #define MAX_ARGS 20
 #define MAX_LOG 20
 /***********************************************global interger to indicate the status**************************************************************************/
-int cmdfound;
 int lognumber;//history log
 
