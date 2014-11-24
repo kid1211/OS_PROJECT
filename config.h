@@ -4,6 +4,7 @@
 #define error 1//errno
 #define MAX_ARGS 20
 #define MAX_LOG 20
+#define MAX_CMDSTRING 20
 /***********************************************global interger to indicate the status**************************************************************************/
 int lognumber;//history log
 

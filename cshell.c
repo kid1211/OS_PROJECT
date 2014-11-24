@@ -29,7 +29,9 @@ Description: building a custom shell that include the following features
 #include <sys/wait.h>
 
 /*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)************************/
-int parse(char* input, char** arguments);//parse the line of input, seperate them into arguments array, the return number is how many argument there is, and arguments[0] is command
+int parse(char* input, char*** arguments,int pipelinepara, int* para);//parse the line of input, seperate them into arguments array, the return number is how many argument there is, and arguments[0] is command
+//if pipelineflag is set, the******************************8
+//if it detectes the parentesess the order of cmd execution will change accordingly before return from function and para will return the number of arguments for each cmd entered
 //follow two function can be combined together
 char* check_cmd(char* commands,char* dir, int depth, int further);//function that check the command if it is in the directory
 
@@ -39,7 +41,7 @@ char* check_cmd(char* commands,char* dir, int depth, int further);//function tha
 //main function
 void main(int argc, char *argv[]){
 	char** arg_his= (char **) malloc(MAX_LOG*sizeof(char*));//store input from user
-	int j;
+	int j,k;
 	for(j=0;j<MAX_LOG;j++) arg_his[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 	lognumber=0;//initialize the global variable for the arguments history
 
@@ -60,10 +62,18 @@ void main(int argc, char *argv[]){
 			
 		//varriable declaration
 		char* input = (char *) malloc(MAX_LENGTH);
-		char** arguments= (char **) malloc(MAX_ARGS*sizeof(char*));
-       		for(j=0;j<MAX_ARGS;j++) arguments[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
-		
-		int cargc;
+		char*** arguments= (char ***) malloc(MAX_CMDSTRING*sizeof(char**));
+       		for(j=0;j<MAX_CMDSTRING;j++){
+			arguments[j] = (char**) malloc(MAX_ARGS*sizeof(char*));
+			for(k=0;k<MAX_ARGS;k++)
+				arguments[j][k] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
+		}
+		//char** arguments= (char **) malloc(MAX_ARGS*sizeof(char*));
+       		//for(j=0;j<MAX_ARGS;j++) arguments[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
+		int pipelineflag;
+		int* para = (int*) malloc(MAX_CMDSTRING*sizeof(int));//if there is somethin like ls -lt| head, then the parameters should be parameters[0]=2, parameters[1]=1 etc.
+		int cargc; //same example as above, cargc = 2, indicate there is totally 2 cmd is stored in arguments
+/****************************end of decleartion and start of program************************************************************************************************************/
 		fprintf(stdout,"$ ");//shell command line symbol
 
 		//cannot handle the tab or up arrow input in concurren. Maybe create a new process to monitor the input from user might work, but it will take a lot of work
@@ -77,12 +87,12 @@ void main(int argc, char *argv[]){
 
 		
 		//parse the input
-		cargc = parse(input, arguments);
-		arguments[cargc+1] = NULL;//let the last argument be null
+		cargc = parse(input, arguments,pipelineflag,para);
+		arguments[0][para[0]+1] = NULL;//let the last argument be null
 
 
 	
-		if(arguments[cargc][strlen(arguments[cargc])-1] == '\t'){//need to auto finish
+		if(arguments[0][para[0]][strlen(arguments[0][para[0]])-1] == '\t'){//need to auto finish
 			//get current directory and store it so that later on it can be retreat
 			char* cwd = getcwd(NULL,0);
 			if(cwd==NULL) fprintf(stderr,"getcwd() error");
@@ -90,19 +100,19 @@ void main(int argc, char *argv[]){
 			else fprintf(stdout,"current directory is %s\n",cwd);
 #endif
 
-			//printf("getcha->%c<-\n\n",arguments[cargc][strlen(arguments[cargc])-1]);
+			//printf("getcha->%c<-\n\n",arguments[0][cargc][strlen(arguments[0][cargc])-1]);
 			//initialize an array for store the value from check_cmd for tab feature
 
 			tab_log = NULL;
 			//further is equal to 0
-			tab_log = check_cmd(arguments[cargc],cwd, 0,0);
+			tab_log = check_cmd(arguments[0][para[0]],cwd, 0,0);
 			
 			if(tab_log != NULL){
 				//this will make the program run 2 times for reasons that is unkonwn
 				
 				/*fprintf(stdout,"do you mean %s? y/n\n",tab_log);
 				if(getchar() == 'y') */
-					arguments[cargc] = tab_log;
+					arguments[0][para[0]] = tab_log;
 
 			}
 			else fprintf(stderr,"more than one file is matched or no such file in this folder\n");
@@ -113,19 +123,19 @@ void main(int argc, char *argv[]){
 			
 			
 		//special case command
-		if(strcmp(arguments[0],"cmdhistory")==0){//print the cmd history
+		if(strcmp(arguments[0][0],"cmdhistory")==0){//print the cmd history
 			for(j = 0; j<lognumber;j++) fprintf(stdout,"%d %s",j,arg_his[j]);	
 			tab_log = "cmdhistory";
 		}
-		if(strcmp(arguments[0],"usecmdhistory")==0){//use one of the command from history
+		if(strcmp(arguments[0][0],"usecmdhistory")==0){//use one of the command from history
 			//parse the input of the desired input from the history
-			int targetlog = atoi(arguments[1]);
-			cargc = parse(arg_his[targetlog], arguments);//change the second argument to interger so that the arg_his can be access
-			arguments[cargc+1] = NULL;//let the last argument be null
+			int targetlog = atoi(arguments[0][1]);
+			cargc = parse(arg_his[targetlog], arguments,pipelineflag,para);//change the second argument to interger so that the arg_his can be access
+			arguments[0][para[0]+1] = NULL;//let the last argument be null
 			tab_log = "usecmdhistory";		
 		}
-		if(strcmp(arguments[0],"cd")==0){
-			chdir(arguments[1]);			
+		if(strcmp(arguments[0][0],"cd")==0){
+			chdir(arguments[0][1]);			
 			tab_log = "cd";
 		}
 	
@@ -143,9 +153,9 @@ void main(int argc, char *argv[]){
 #endif
 			
 			tab_log= NULL;
-			tab_log = check_cmd(arguments[0],"/bin",0,1);
+			tab_log = check_cmd(arguments[0][0],"/bin",0,1);
 			if(tab_log==NULL) {
-				tab_log=check_cmd(arguments[0],"/usr/bin",0,1);//for tab feature
+				tab_log=check_cmd(arguments[0][0],"/usr/bin",0,1);//for tab feature
 				if(tab_log ==NULL) fprintf(stderr,"command is not found\n");//if no command is found then tab_log return null
 			}
 			chdir(cwd);
@@ -153,10 +163,10 @@ void main(int argc, char *argv[]){
 #if debug
 			//display all the arguments that is parsed to excute
 			int b;
-			for(b =0 ; b<sizeof(arguments);b++) fprintf(stdout,"|%d %s|\n",b,arguments[b]);
+			for(b =0 ; b<sizeof(arguments[0]);b++) fprintf(stdout,"|%d %s|\n",b,arguments[0][b]);
 #endif	
 			
-			execvp(*arguments,arguments);
+			execvp(*arguments[0],arguments[0]);
 	
 		}
 		else if(rc>0){
@@ -173,22 +183,25 @@ void main(int argc, char *argv[]){
 }
 /***************************************all functions bodies should be written here***************************************************************************/
 //parse the line of input, sepreate them into command catergory or argument and return both in pointers
-int parse(char* input, char** arguments)
+int parse(char* input, char*** arguments,int pipelinepara, int* para)
 {
-	int i=0;//counter for number of arguments9
-	arguments[i]=strtok(input," ");//no \n for the strtok so that the \n will not be removed
+	int i=0;//counter for number of arguments9'
+	int cmdnumber;//numbers that will be stored in parameters indicate numbers of arguments in each cmd entered
+	
+	arguments[0][i]=strtok(input," |");//no \n for the strtok so that the \n will not be removed
 	
 	
-	while(arguments[i][strlen(arguments[i])-1] != '\n'){//since the last bit/interge of the string is \0 therefore the \n is the last bit -a bit
+	while(arguments[0][i][strlen(arguments[0][i])-1] != '\n'){//since the last bit/interge of the string is \0 therefore the \n is the one before the last bit
 		
 	
 	
 			//the first token  is in the input is the command and the rest are the argument
 			i++;
-			arguments[i] = strtok(NULL," ") ;	
+			arguments[0][i] = strtok(NULL," ") ;	
 	
 	}
-	arguments[i][strlen(arguments[i])-1] = '\0';//remove the enter from the input and replace it with \0
+	para[0] = i;
+	arguments[0][i][strlen(arguments[0][i])-1] = '\0';//remove the enter from the input and replace it with \0
 	return i;
 }
 
