@@ -37,9 +37,14 @@ char* check_cmd(char* commands,char* dir, int depth, int further);//function tha
 
 
 //main function
-void main(int argc, char *argv[]){
+int main(int argc, char *argv[]){
 	char** arg_his= (char **) malloc(MAX_LOG*sizeof(char*));//store input from user
 	int j;
+	//int mypipe[2];
+	//char *command_arrayA[10];
+    	//char *command_arrayB[10];
+	//int pipe_flag=1;
+	//char *line[2];
 	for(j=0;j<MAX_LOG;j++) arg_his[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 	lognumber=0;//initialize the global variable for the arguments history
 
@@ -54,7 +59,7 @@ void main(int argc, char *argv[]){
 
 	//start of the main function
 	while(1){//constantly running shell
-
+		printf("NBshell ");
 		//initialize the global variable
 		
 			
@@ -128,10 +133,9 @@ void main(int argc, char *argv[]){
 			chdir(arguments[1]);			
 			tab_log = "cd";
 		}
-	
 
 		
-/*************************going to create a new process to run************************************************************************************************************************/		
+/*************************going to create a new process to run***********************************************************************************************************************/		
 		int rc= fork();
 		if(rc<0) fprintf(stderr, "unable to create a new process,worst shell ever\n");
 		else if(rc==0) {//excute the valid command and also check if the command is valid and tab feature
@@ -141,7 +145,7 @@ void main(int argc, char *argv[]){
 #if debug
 			else fprintf(stdout,"current directory is %s\n",cwd);
 #endif
-			
+			//tab   
 			tab_log= NULL;
 			tab_log = check_cmd(arguments[0],"/bin",0,1);
 			if(tab_log==NULL) {
@@ -160,7 +164,8 @@ void main(int argc, char *argv[]){
 	
 		}
 		else if(rc>0){
-			int wc = wait(NULL);//return what child process it has been waited
+			//int wc = wait(NULL);//return what child process it has been waited
+			wait(NULL);
 			//free up all the used space after before quit
 			free(input); //freee the space before quit
 			free(arguments);
@@ -168,25 +173,25 @@ void main(int argc, char *argv[]){
 	}
 	
 	exit(1);//if the program quit this way, something is wrong
-
-	
 }
+
+
 /***************************************all functions bodies should be written here***************************************************************************/
 //parse the line of input, sepreate them into command catergory or argument and return both in pointers
 int parse(char* input, char** arguments)
 {
 	int i=0;//counter for number of arguments9
+	char *p;
 	arguments[i]=strtok(input," ");//no \n for the strtok so that the \n will not be removed
-	
-	
 	while(arguments[i][strlen(arguments[i])-1] != '\n'){//since the last bit/interge of the string is \0 therefore the \n is the last bit -a bit
-		
-	
-	
 			//the first token  is in the input is the command and the rest are the argument
+			p = arguments[i];
+			if (strcmp(p, "|") == 0){
+				arguments[i] = NULL;
+			}
 			i++;
-			arguments[i] = strtok(NULL," ") ;	
-	
+			arguments[i] = strtok(NULL," ");
+
 	}
 	arguments[i][strlen(arguments[i])-1] = '\0';//remove the enter from the input and replace it with \0
 	return i;
@@ -205,7 +210,7 @@ char* check_cmd(char* commands,char* dir, int depth, int further)
 	struct stat statbuf;//stat buffer
 	if((dirpath = opendir(dir))== NULL){
 		fprintf(stderr, "the directory %s is not able to be open\n",dir);
-		return;
+		return 0;
 	}
 
 	chdir(dir);//change working directory
