@@ -1,5 +1,6 @@
 /**********************************************pragram global variable declartion here*****************************************************************************/
-#define debug 1//0 = off, 1=on
+#define debugarg 0//0 = off, 1=on
+#define debugdir 0//0 = off, 1=on
 #define debugfork 0//0 = off, 1=on
 #define MAX_LENGTH 100//the max length of a line of command received
 #define error 1//errno

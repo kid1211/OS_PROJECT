@@ -29,7 +29,7 @@ Description: building a custom shell that include the following features
 #include <sys/wait.h>
 
 /*******all the function should be declare here with the short explanation of what this function do and how(by calling what and what should be the argument)************************/
-int parse(char* input, char*** arguments,int pipelinepara, int* para);//parse the line of input, seperate them into arguments array, the return number is how many argument there is, and arguments[0] is command
+int parse(char* input, char*** arguments,int* ampersandflag, int* para);//parse the line of input, seperate them into arguments array, the return number is how many argument there is, and arguments[0] is command
 //if pipelineflag is set, the******************************8
 //if it detectes the parentesess the order of cmd execution will change accordingly before return from function and para will return the number of arguments for each cmd entered
 //follow two function can be combined together
@@ -68,7 +68,9 @@ void main(int argc, char *argv[]){
 			for(k=0;k<MAX_ARGS;k++)
 				arguments[j][k] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 		}
-		int pipelineflag;
+		int* ampersandflag = malloc(MAX_ARGS*sizeof(int));
+		int v;
+		for(v=0;v<=MAX_ARGS;v++) ampersandflag[v] = -1;
 		int* para = (int*) malloc(MAX_CMDSTRING*sizeof(int));//if there is somethin like ls -lt| head, then the parameters should be parameters[0]=2, parameters[1]=1 etc.
 		int cargc; //same example as above, cargc = 2, indicate there is totally 2 cmd is stored in arguments
 
@@ -86,7 +88,7 @@ void main(int argc, char *argv[]){
 
 		
 		//parse the input
-		cargc = parse(input, arguments,pipelineflag,para);
+		cargc = parse(input, arguments,ampersandflag,para);
 		arguments[0][para[0]+1] = NULL;//let the last argument be null
 
 
@@ -95,11 +97,11 @@ void main(int argc, char *argv[]){
 			//get current directory and store it so that later on it can be retreat
 			char* cwd = getcwd(NULL,0);
 			if(cwd==NULL) fprintf(stderr,"getcwd() error");
-#if debug
+#if debugdir
 			else fprintf(stdout,"current directory is %s\n",cwd);
 #endif
 
-			//printf("getcha->%c<-\n\n",arguments[0][cargc][strlen(arguments[0][cargc])-1]);
+			//fprintf(stdout,"getcha->%c<-\n\n",arguments[0][cargc][strlen(arguments[0][cargc])-1]);
 			//initialize an array for store the value from check_cmd for tab feature
 
 			tab_log = NULL;
@@ -129,7 +131,7 @@ void main(int argc, char *argv[]){
 		if(strcmp(arguments[0][0],"usecmdhistory")==0){//use one of the command from history
 			//parse the input of the desired input from the history
 			int targetlog = atoi(arguments[0][1]);
-			cargc = parse(arg_his[targetlog], arguments,pipelineflag,para);//change the second argument to interger so that the arg_his can be access
+			cargc = parse(arg_his[targetlog], arguments,ampersandflag,para);//change the second argument to interger so that the arg_his can be access
 			arguments[0][para[0]+1] = NULL;//let the last argument be null
 			tab_log = "usecmdhistory";		
 		}
@@ -149,6 +151,21 @@ void main(int argc, char *argv[]){
         pid_t* child_pids= malloc((cargc+1)*sizeof(pid_t));
 
         for (n=0; n <= cargc; n++){
+				if(ampersandflag[n] == 0){
+			
+					siginfo_t *infop;
+					if(n>0){
+                        		int status = 0;
+#if debugfork
+                        		fprintf(stdout,"CHILD: waiting for child %d (%d)\n", (n-1), child_pids[n-1]);
+#endif
+                       			int rc_pid = waitpid(child_pids[n-1], &status, 0);
+#if debugfork
+                       			fprintf(stdout,"CHILD: Child: %d returned value is: %d\n", (n-1), WEXITSTATUS(status));
+#endif
+						
+					}
+				}
 
                 /* Multiple child forking */
                 switch(pid = fork()){
@@ -161,14 +178,12 @@ void main(int argc, char *argv[]){
                         case 0:
                                 /*Children process*/
                                 pid = getpid();
-#if debugfork
-                                printf(" CHILD: number (and return value): %d PID: %d PPID: %d \n", n, pid, getppid());
-#endif
+				
 
 /**************************************************************childproc******************************************************************************************************************/
 				char* cwd = getcwd(NULL,0);
 				if(cwd==NULL) fprintf(stderr,"getcwd() error");
-#if debug
+#if debugdir
 				else fprintf(stdout,"current directory is %s\n",cwd);
 #endif
 			
@@ -180,13 +195,14 @@ void main(int argc, char *argv[]){
 				}
 				chdir(cwd);
 				free(cwd);
-#if debug
+#if debugarg
 				//display all the arguments that is parsed to excute
 				int b;
 				for(b =0 ; b<sizeof(arguments[n]);b++) fprintf(stdout,"|%d %s|\n",b,arguments[n][b]);
 #endif	
 
 			
+				//exit(1);
 				execvp(*arguments[n],arguments[n]);
                                 /*Missing code for parent process*/
                         default:
@@ -197,17 +213,18 @@ void main(int argc, char *argv[]){
         }
         /*Parent process*/
         if (pid!=0 && pid!=-1) {
+
 #if debugfork
-                printf("PARENT: my PID is %d\n", getpid());
+                fprintf(stdout,"PARENT: my PID is %d\n", getpid());
 #endif
                 for (n=0; n<=cargc; n++){
                         int status = 0;
 #if debugfork
-                        printf("PARENT: waiting for child %d (%d)\n", n, child_pids[n]);
+                        fprintf(stdout,"PARENT: waiting for child %d (%d)\n", n, child_pids[n]);
 #endif
                         int rc_pid = waitpid(child_pids[n], &status, 0);
 #if debugfork
-                        printf("PARENT: Child: %d returned value is: %d\n", n, WEXITSTATUS(status));
+                        fprintf(stdout,"PARENT: Child: %d returned value is: %d\n", n, WEXITSTATUS(status));
 #endif
                 }
         }
@@ -218,7 +235,7 @@ void main(int argc, char *argv[]){
 }
 /***************************************all functions bodies should be written here***************************************************************************/
 //parse the line of input, sepreate them into command catergory or argument and return both in pointers
-int parse(char* input, char*** arguments,int pipelinepara, int* para)
+int parse(char* input, char*** arguments,int* ampersandflag, int* para)
 {
 	int i=0;//counter for number of arguments9'
 	para[i] = 0;
@@ -228,8 +245,9 @@ int parse(char* input, char*** arguments,int pipelinepara, int* para)
 	arguments[i][para[i]]=strtok(input," ");//no \n for the strtok so that the \n will not be removed
 	
 	while(arguments[i][para[i]][strlen(arguments[i][para[i]])-1] != '\n'){//since the last bit/interge of the string is \0 therefore the \n is the one before the last bit
-	
+		//concurrent
 		if(arguments[i][para[i]][strlen(arguments[i][para[i]])-1] == ';'){
+			
 			arguments[i][para[i]][strlen(arguments[i][para[i]])-1] = '\0';//replace ; with \0
 			i++;
 			para[i]=-1;//reinitialize
@@ -243,7 +261,15 @@ int parse(char* input, char*** arguments,int pipelinepara, int* para)
 	}
 	arguments[i][para[i]][strlen(arguments[i][para[i]])-1] = '\0';//replace \n with \0
 	int m;
-	for(m =0; m<=i;m++) arguments[m][para[m]+1]=NULL;
+	for(m =0; m<=i;m++){
+		arguments[m][para[m]+1]=NULL;
+		if(arguments[m][para[m]][strlen(arguments[m][para[m]])-1] == '&'){
+			arguments[m][para[m]][strlen(arguments[m][para[m]])-1] = '\0';//replace ; with \0
+			ampersandflag[m]= 1;
+		}
+		else ampersandflag[m] = 0;
+		//ampersand
+	}
 	
 	return i;
 }
@@ -276,7 +302,7 @@ char* check_cmd(char* commands,char* dir, int depth, int further)
 				}
 				else if(strcmp(entry->d_name,commands)==0){
 					tab_log = entry->d_name;
-#if debug
+#if debugdir
 					 fprintf(stdout,"%s is in foloder %s\n",entry->d_name,dir);
 #endif
 
