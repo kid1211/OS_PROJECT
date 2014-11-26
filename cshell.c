@@ -68,11 +68,10 @@ void main(int argc, char *argv[]){
 			for(k=0;k<MAX_ARGS;k++)
 				arguments[j][k] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 		}
-		//char** arguments= (char **) malloc(MAX_ARGS*sizeof(char*));
-       		//for(j=0;j<MAX_ARGS;j++) arguments[j] = (char*) malloc(MAX_LENGTH+1);//the +1 is for null
 		int pipelineflag;
 		int* para = (int*) malloc(MAX_CMDSTRING*sizeof(int));//if there is somethin like ls -lt| head, then the parameters should be parameters[0]=2, parameters[1]=1 etc.
 		int cargc; //same example as above, cargc = 2, indicate there is totally 2 cmd is stored in arguments
+
 /****************************end of decleartion and start of program************************************************************************************************************/
 		fprintf(stdout,"$ ");//shell command line symbol
 
@@ -138,45 +137,81 @@ void main(int argc, char *argv[]){
 			chdir(arguments[0][1]);			
 			tab_log = "cd";
 		}
+		if(strcmp(arguments[0][0],"exit")==0){
+			exit(0);
+		}
 	
 
 		
 /*************************going to create a new process to run************************************************************************************************************************/		
-		int rc= fork();
-		if(rc<0) fprintf(stderr, "unable to create a new process,worst shell ever\n");
-		else if(rc==0) {//excute the valid command and also check if the command is valid and tab feature
-			//get current directory and store it so that later on it can be retreat
-			char* cwd = getcwd(NULL,0);
-			if(cwd==NULL) fprintf(stderr,"getcwd() error");
+        pid_t pid;
+        int n;
+        pid_t* child_pids= malloc((cargc+1)*sizeof(pid_t));
+
+        for (n=0; n <= cargc; n++){
+
+                /* Multiple child forking */
+                switch(pid = fork()){
+                        case -1:
+                                /* something went wrong */
+                                /* parent exits */
+                                perror("fork");
+                                exit(n);
+
+                        case 0:
+                                /*Children process*/
+                                pid = getpid();
+#if debugfork
+                                printf(" CHILD: number (and return value): %d PID: %d PPID: %d \n", n, pid, getppid());
+#endif
+
+/**************************************************************childproc******************************************************************************************************************/
+				char* cwd = getcwd(NULL,0);
+				if(cwd==NULL) fprintf(stderr,"getcwd() error");
 #if debug
-			else fprintf(stdout,"current directory is %s\n",cwd);
+				else fprintf(stdout,"current directory is %s\n",cwd);
 #endif
 			
-			tab_log= NULL;
-			tab_log = check_cmd(arguments[0][0],"/bin",0,1);
-			if(tab_log==NULL) {
-				tab_log=check_cmd(arguments[0][0],"/usr/bin",0,1);//for tab feature
-				if(tab_log ==NULL) fprintf(stderr,"command is not found\n");//if no command is found then tab_log return null
-			}
-			chdir(cwd);
-			free(cwd);
+				tab_log= NULL;
+				tab_log = check_cmd(arguments[n][0],"/bin",0,1);
+				if(tab_log==NULL) {
+					tab_log=check_cmd(arguments[n][0],"/usr/bin",0,1);//for tab feature
+					if(tab_log ==NULL) fprintf(stderr,"command is not found\n");//if no command is found then tab_log return null
+				}
+				chdir(cwd);
+				free(cwd);
 #if debug
-			//display all the arguments that is parsed to excute
-			int b;
-			for(b =0 ; b<sizeof(arguments[0]);b++) fprintf(stdout,"|%d %s|\n",b,arguments[0][b]);
+				//display all the arguments that is parsed to excute
+				int b;
+				for(b =0 ; b<sizeof(arguments[n]);b++) fprintf(stdout,"|%d %s|\n",b,arguments[n][b]);
 #endif	
+
 			
-			execvp(*arguments[0],arguments[0]);
-	
-		}
-		else if(rc>0){
-			int wc = wait(NULL);//return what child process it has been waited
-			//free up all the used space after before quit
-			free(input); //freee the space before quit
-			free(arguments);
-		}
-	}
-	
+				execvp(*arguments[n],arguments[n]);
+                                /*Missing code for parent process*/
+                        default:
+                                /* Parent process */
+                                child_pids[n] = pid;
+                                break;
+                }
+        }
+        /*Parent process*/
+        if (pid!=0 && pid!=-1) {
+#if debugfork
+                printf("PARENT: my PID is %d\n", getpid());
+#endif
+                for (n=0; n<=cargc; n++){
+                        int status = 0;
+#if debugfork
+                        printf("PARENT: waiting for child %d (%d)\n", n, child_pids[n]);
+#endif
+                        int rc_pid = waitpid(child_pids[n], &status, 0);
+#if debugfork
+                        printf("PARENT: Child: %d returned value is: %d\n", n, WEXITSTATUS(status));
+#endif
+                }
+        }
+}
 	exit(1);//if the program quit this way, something is wrong
 
 	
@@ -186,22 +221,30 @@ void main(int argc, char *argv[]){
 int parse(char* input, char*** arguments,int pipelinepara, int* para)
 {
 	int i=0;//counter for number of arguments9'
+	para[i] = 0;
 	int cmdnumber;//numbers that will be stored in parameters indicate numbers of arguments in each cmd entered
+	char* temp = (char*) malloc(MAX_ARGS*sizeof(char));//temperary store the cmd entered
 	
-	arguments[0][i]=strtok(input," |");//no \n for the strtok so that the \n will not be removed
+	arguments[i][para[i]]=strtok(input," ");//no \n for the strtok so that the \n will not be removed
 	
+	while(arguments[i][para[i]][strlen(arguments[i][para[i]])-1] != '\n'){//since the last bit/interge of the string is \0 therefore the \n is the one before the last bit
 	
-	while(arguments[0][i][strlen(arguments[0][i])-1] != '\n'){//since the last bit/interge of the string is \0 therefore the \n is the one before the last bit
-		
-	
-	
-			//the first token  is in the input is the command and the rest are the argument
+		if(arguments[i][para[i]][strlen(arguments[i][para[i]])-1] == ';'){
+			arguments[i][para[i]][strlen(arguments[i][para[i]])-1] = '\0';//replace ; with \0
 			i++;
-			arguments[0][i] = strtok(NULL," ") ;	
-	
+			para[i]=-1;//reinitialize
+		}
+
+		//the first token  is in the input is the command and the rest are the argument
+		para[i]++;	
+		arguments[i][para[i]] = strtok(NULL," ") ;
+		
+		
 	}
-	para[0] = i;
-	arguments[0][i][strlen(arguments[0][i])-1] = '\0';//remove the enter from the input and replace it with \0
+	arguments[i][para[i]][strlen(arguments[i][para[i]])-1] = '\0';//replace \n with \0
+	int m;
+	for(m =0; m<=i;m++) arguments[m][para[m]+1]=NULL;
+	
 	return i;
 }
 
@@ -267,7 +310,6 @@ char* check_cmd(char* commands,char* dir, int depth, int further)
 	return tab_log;//return nothing
 	
 }
-
 
 
 
