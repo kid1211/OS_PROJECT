@@ -34,6 +34,8 @@ int parse(char* input, char*** arguments,int* ampersandflag, int* para);//parse 
 //if it detectes the parentesess the order of cmd execution will change accordingly before return from function and para will return the number of arguments for each cmd entered
 //follow two function can be combined together
 char* check_cmd(char* commands,char* dir, int depth, int further);//function that check the command if it is in the directory
+void print(int(*p)[62]);
+void star(int (*p)[62],int i,int j,int n);
 
 
 
@@ -54,6 +56,14 @@ void main(int argc, char *argv[]){
 
 	}
 
+	int a[20][62]={0};
+	star(a,2,25,3);
+	print(a);
+	fprintf(stdout,"================--^-^----WELCOME----^-^--================\n");
+	fprintf(stdout,"                @  +  @            @ +  @                \n");
+	fprintf(stdout,"                   _                 _                   \n");
+	fprintf(stdout,"Group name: NoName\nGroup menber:Xujie Zheng(xj721386) A00394753\nFengxiao Yuan(FengxiaYuan) A00394754\nJie Zhang(JieZhang0918) A00331569\n");
+ 	fprintf(stdout,"===================LET US START THE PARTY================\n");
 	//start of the main function
 	while(1){//constantly running shell
 
@@ -337,7 +347,74 @@ char* check_cmd(char* commands,char* dir, int depth, int further)
 	
 }
 
-
+void print(int(*p)[62])
+{
+int i,i2=0,j,j2=49;
+for(i=0;i<20;i++)
+{
+fprintf(stdout," ");
+for(j=0;j<62;j++)
+{
+if(i==i2||i==i2+1)
+if(j>j2&&j<j2+13)
+continue;
+if(*(*(p+i)+j)==1||*(*(p+i)+j)==2)
+fprintf(stdout,"*");
+else if(*(*(p+i)+j)==3||*(*(p+i)+j)==4)
+fprintf(stdout,"*");
+else
+fprintf(stdout," ");
+}
+fprintf(stdout," \n");
+}
+}
+void star(int (*p)[62],int i,int j,int n)
+{
+int k,l,a,b;
+for(k=0;k<18;k++,i++,j++)
+{
+*(*(p+i)+j)=n;
+if(k>7&&k<11)
+*(*(p+i)+j)=0;
+}
+i--,j--;
+for(k=0;k<11;k++,i--,j-=4)
+{
+*(*(p+i)+j)=n;
+if(k>4&&k<7)
+*(*(p+i)+j)=0;
+}
+i++,j+=4;
+for(k=0;k<47;k++,j++)
+{
+*(*(p+i)+j)=n;
+}
+j--;
+for(k=0;k<11;k++,i++,j-=4)
+{
+*(*(p+i)+j)=n;
+if(k>3&&k<6)
+*(*(p+i)+j)=0;
+}
+i--,j+=4;
+for(k=0;k<18;k++,i--,j++)
+{
+*(*(p+i)+j)=n;
+if(k>6&&k<10)
+*(*(p+i)+j)=0;
+}
+i++,j--;
+a=i,b=j;
+i++,j++;
+for(k=1;k<17;k++,i++,j++)
+for(l=j-1;*(*(p+i)+l)!=n;l--)
+*(*(p+i)+l)=n+1;
+i=a,j=b;
+i++,j--;
+for(k=1;k<17;k++,i++,j--)
+for(l=j+1;*(*(p+i)+l)!=n;l++)
+*(*(p+i)+l)=n+1;
+} 
 
 
 
