@@ -99,7 +99,7 @@ void main(int argc, char *argv[]){
 		//cannot handle the tab or up arrow input in concurren. Maybe create a new process to monitor the input from user might work, but it will take a lot of work
 		if(!fgets(input, MAX_LENGTH, stdin)) break;//if the argument is sending longer than MAX_LENGTH the program will quit
 
-
+		
 		strcpy(arg_his[lognumber],input);
 		time ( &rawtime[lognumber] );
 		lognumber++;
